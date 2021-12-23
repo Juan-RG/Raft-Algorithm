@@ -1,0 +1,9 @@
+#kind delete cluster
+#./kind-with-register.sh
+#kubectl apply -f statefulset_go.yaml
+#Falta el cliente
+#Si no funciona generar los containers con los codigos modificados
+
+#para lanzar el cliente una vez lanzado raft 
+#kubectl apply -f pods_go.yaml
+#kubectl delete -f pods_go.yaml -> cada vez que eliminamos y ejecutamos 1 lectura y 1 escritura
