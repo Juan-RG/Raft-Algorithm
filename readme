@@ -1,8 +1,15 @@
 #kind delete cluster
+#generar la imagenes locales con los comandos 
+docker build . -t localhost:5000/raft:latest
+docker push localhost:5000/raft:latest
+
+docker build . -t localhost:5000/cliente:latest
+docker push localhost:5000/cliente:latest
+#borramos el cluster si estaba creado anteriormente kind delete cluster
+lanzamos el comando para registrar el cluser con las imagenes locales
 #./kind-with-register.sh
+lanzamos el statefulset
 #kubectl apply -f statefulset_go.yaml
-#Falta el cliente
-#Si no funciona generar los containers con los codigos modificados
 
 #para lanzar el cliente una vez lanzado raft 
 #kubectl apply -f pods_go.yaml
