@@ -14,3 +14,7 @@ lanzamos el statefulset
 #para lanzar el cliente una vez lanzado raft 
 #kubectl apply -f pods_go.yaml
 #kubectl delete -f pods_go.yaml -> cada vez que eliminamos y ejecutamos 1 lectura y 1 escritura
+
+Para lanzar los test lanzamos el comando
+kubectl exec --stdin --tty c3 -- /bin/sh
+para acceder por ssh y accedemos al pod CUIDADO AL LANZAR LOS test por tiempo de resolucion dns puede tardar demasiado mejor ejecutar de 1 en 1
