@@ -18,3 +18,5 @@ lanzamos el statefulset
 Para lanzar los test lanzamos el comando
 kubectl exec --stdin --tty c3 -- /bin/sh
 para acceder por ssh y accedemos al pod CUIDADO AL LANZAR LOS test por tiempo de resolucion dns puede tardar demasiado mejor ejecutar de 1 en 1
+go test testintegracionraft1_test.go -timeout=30m -v
+
