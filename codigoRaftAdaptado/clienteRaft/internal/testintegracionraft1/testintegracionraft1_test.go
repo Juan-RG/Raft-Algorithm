@@ -27,15 +27,19 @@ const (
 	MAQUINA1      = "localhost"
 	MAQUINA2      = "localhost"
 	MAQUINA3      = "localhost"
+	MAQUINA4      = "localhost"
+
 	//puertos
 	PUERTOREPLICA1 = "29250"
 	PUERTOREPLICA2 = "29251"
 	PUERTOREPLICA3 = "29252"
+	PUERTOREPLICA4 = "29253"
 
 	//nodos replicas
 	REPLICA1 = MAQUINA1 + ":" + PUERTOREPLICA1
 	REPLICA2 = MAQUINA2 + ":" + PUERTOREPLICA2
 	REPLICA3 = MAQUINA3 + ":" + PUERTOREPLICA3
+	REPLICA4 = MAQUINA4 + ":" + PUERTOREPLICA4
 
 	// paquete main de ejecutables relativos a PATH previo
 	EXECREPLICA = "cmd/srvraft/main.go"
@@ -62,9 +66,9 @@ func TestPrimerasPruebas(t *testing.T) { // (m *testing.M) {
 	// <setup code>
 	// Crear canal de resultados de ejecuciones ssh en maquinas remotas
 	cfg := makeCfgDespliegue(t,
-							3,
-							[]string{REPLICA1, REPLICA2, REPLICA3},
-							[]bool{true, true, true})
+							4,
+							[]string{REPLICA1, REPLICA2, REPLICA3,REPLICA4},
+							[]bool{true, true, true, true})
 
 	// tear down code
 	// eliminar procesos en máquinas remotas
@@ -187,6 +191,9 @@ func (cfg *configDespliegue) soloArranqueYparadaTest1(t *testing.T) {
 	// Comprobar estado replica 2
 	cfg.comprobarEstadoRemoto (2, 0, false, -1)
 
+	// Comprobar estado replica 3
+	cfg.comprobarEstadoRemoto (3, 0, false, -1)
+
 	// Parar réplicas almacenamiento en remoto
 	cfg.stopDistributedProcesses()
 
@@ -204,7 +211,7 @@ func (cfg *configDespliegue) elegirPrimerLiderTest2(t *testing.T) {
 	time.Sleep(time.Second * 8)
 	// Se ha elegido lider ?
 	fmt.Printf("Probando lider en curso\n")
-	cfg.pruebaUnLider(3)
+	cfg.pruebaUnLider(4)
 
 
 	// Parar réplicas alamcenamiento en remoto
@@ -222,15 +229,15 @@ func (cfg *configDespliegue) falloAnteriorElegirNuevoLiderTest3(t *testing.T) {
 	cfg.startDistributedProcesses()
 	time.Sleep(time.Second * 8)
 	fmt.Printf("Lider inicial\n")
-	time.Sleep(time.Second *5)
-	cfg.pruebaUnLider(3)
+	time.Sleep(time.Second *6)
+	cfg.pruebaUnLider(4)
 
 
 	// Desconectar lider
 	cfg.stopDistributedLeaderProcesses()
-	time.Sleep(time.Second *5)
+	time.Sleep(time.Second *6)
 	fmt.Printf("Comprobar nuevo lider\n")
-	cfg.pruebaUnLider(3)
+	cfg.pruebaUnLider(4)
 	
 
 	// Parar réplicas almacenamiento en remoto
@@ -248,14 +255,15 @@ func (cfg *configDespliegue) tresOperacionesComprometidasEstable(t *testing.T) {
 	cfg.startDistributedProcesses()
 
 	fmt.Printf("Lider inicial\n")
-	time.Sleep(time.Second *8)
-	cfg.pruebaUnLider(3)
+	time.Sleep(time.Second *9)
+	cfg.pruebaUnLider(4)
 
 	cfg.enviarOperacionesCLiente()
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 7)
 	fmt.Println(cfg.obtenerEntriesNodo(0))
 	fmt.Println(cfg.obtenerEntriesNodo(1))
 	fmt.Println(cfg.obtenerEntriesNodo(2))
+	fmt.Println(cfg.obtenerEntriesNodo(3))
 	cfg.stopDistributedProcesses()  //parametros
 
 	fmt.Println(".............", t.Name(), "Superado")
@@ -269,8 +277,8 @@ func(cfg *configDespliegue) AcuerdoApesarDeSeguidor(t *testing.T) {
 	cfg.startDistributedProcesses()
 
 	fmt.Printf("Lider inicial\n")
-	time.Sleep(time.Second * 8)
-	cfg.pruebaUnLider(3)
+	time.Sleep(time.Second * 10)
+	cfg.pruebaUnLider(4)
 
 	// Comprometer una entrada
 	cfg.enviarOperacionCLiente()
@@ -282,9 +290,12 @@ func(cfg *configDespliegue) AcuerdoApesarDeSeguidor(t *testing.T) {
 	_, e1Term,_,_ := cfg.obtenerEstadoRemotoWithNodesOff(0)
 	_, e2Term,_,_ := cfg.obtenerEstadoRemotoWithNodesOff(1)
 	_, e3Term,_,_ := cfg.obtenerEstadoRemotoWithNodesOff(2)
+	_, e4Term,_,_ := cfg.obtenerEstadoRemotoWithNodesOff(3)
+
 	fmt.Println(cfg.obtenerEstadoRemotoWithNodesOff(0))
 	fmt.Println(cfg.obtenerEstadoRemotoWithNodesOff(1))
 	fmt.Println(cfg.obtenerEstadoRemotoWithNodesOff(2))
+	fmt.Println(cfg.obtenerEstadoRemotoWithNodesOff(3))
 
 	count := 0
 	if e1Term != -1 {
@@ -296,6 +307,9 @@ func(cfg *configDespliegue) AcuerdoApesarDeSeguidor(t *testing.T) {
 	if e3Term != -1 {
 		count++
 	}
+	if e4Term != -1 {
+		count++
+	}
 	if count > 2 {
 		t.Errorf("Hay mas de 2 nodos arrancados")
 	}
@@ -305,35 +319,46 @@ func(cfg *configDespliegue) AcuerdoApesarDeSeguidor(t *testing.T) {
 	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(0))
 	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(1))
 	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(2))
+	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(3))
 	cfg.enviarOperacionCLiente()
 	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(0))
 	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(1))
 	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(2))
+	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(3))
 	cfg.enviarOperacionCLiente()
 	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(0))
 	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(1))
 	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(2))
+	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(3))
+	cfg.enviarOperacionCLiente()
+	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(0))
+	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(1))
+	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(2))
+	fmt.Println(cfg.obtenerEntriesNodoWithNodeOut(3))
 
 	// reconectar nodo Raft previamente desconectado y comprobar varios acuerdos
 	cfg.startDistributedProcesses()//Lanzo todos los nodos de nuevo
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 15)
 
 	fmt.Println(cfg.obtenerEntriesNodo(0))
 	fmt.Println(cfg.obtenerEntriesNodo(1))
 	fmt.Println(cfg.obtenerEntriesNodo(2))
+	fmt.Println(cfg.obtenerEntriesNodo(3))
 
 	entrysNodo1, commitI1 := cfg.obtenerEntriesNodo(0)
 	entrysNodo2, commitI2 := cfg.obtenerEntriesNodo(1)
 	entrysNodo3, commitI3 := cfg.obtenerEntriesNodo(2)
+	entrysNodo4, commitI4 := cfg.obtenerEntriesNodo(3)
 
-	if commitI1 != commitI2 || commitI1 != commitI3 || commitI2 != commitI3 {
+	if commitI1 != commitI2 || commitI1 != commitI3 || commitI1 != commitI4 || commitI2 != commitI3 || commitI2 != commitI4 || commitI3 != commitI4{
 		t.Errorf("Indice de comiteadas diferente")
 	}
-	if len(entrysNodo1) != len(entrysNodo2) || len(entrysNodo1) != len(entrysNodo3) || len(entrysNodo2) != len(entrysNodo3){
+
+	if len(entrysNodo1) != len(entrysNodo2) || len(entrysNodo1) != len(entrysNodo3) || len(entrysNodo1) != len(entrysNodo4) || len(entrysNodo2) != len(entrysNodo3) || len(entrysNodo2) != len(entrysNodo4) || len(entrysNodo3) != len(entrysNodo4){
 		t.Errorf("Replycacion de nodos diferente")
-	}else {
+	} else {
 		for i,element := range entrysNodo1 {
-			if element != entrysNodo2[i] || element != entrysNodo3[i] || entrysNodo2[i] != entrysNodo3[i]  {
+			if element != entrysNodo2[i] || element != entrysNodo3[i] || element != entrysNodo4[i] || entrysNodo2[i] != entrysNodo3[i] || entrysNodo2[i] != entrysNodo4[i] || entrysNodo3[i] != entrysNodo4[i]{
 				t.Errorf("Error Logs diferentes ")
 			}
 		}
@@ -350,37 +375,43 @@ func(cfg *configDespliegue) SinAcuerdoPorFallos(t *testing.T) {
 	cfg.startDistributedProcesses()
 
 	fmt.Printf("Lider inicial\n")
-	time.Sleep(time.Second *8)
-	cfg.pruebaUnLider(3)
+	time.Sleep(time.Second *10)
+	cfg.pruebaUnLider(4)
 	e1,_,e1Leader,_ := cfg.obtenerEstadoRemoto(0)
 	e2,_,e2Leader,_ := cfg.obtenerEstadoRemoto(1)
 	e3,_,e3Leader,_ := cfg.obtenerEstadoRemoto(2)
+	e4,_,e4Leader,_ := cfg.obtenerEstadoRemoto(4)
 
-	if !e1Leader && !e2Leader && !e3Leader {
+	if !e1Leader && !e2Leader && !e3Leader && !e4Leader {
 		t.Errorf("NO hay lider")
 	}else {
 		fmt.Println("Estado actual")
 		fmt.Println("nodo ", e1, " isLeader: ", e1Leader)
 		fmt.Println("nodo ", e2, " isLeader: ", e2Leader)
 		fmt.Println("nodo ", e3, " isLeader: ", e3Leader)
+		fmt.Println("nodo ", e4, " isLeader: ", e4Leader)
 	}
 	// Comprometer una entrada
 	cfg.enviarOperacionCLiente()
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second * 3)
 	//  Obtener un lider y, a continuación desconectar 2 de los nodos Raft
 	fmt.Println(cfg.obtenerEntriesNodo(0))
 	fmt.Println(cfg.obtenerEntriesNodo(1))
 	fmt.Println(cfg.obtenerEntriesNodo(2))
+	fmt.Println(cfg.obtenerEntriesNodo(3))
 
 	cfg.stopNumberOfDistributedProcessesNoleader()
-	time.Sleep(time.Second * 2)
-	var e1Term, e2Term, e3Term  int
+	time.Sleep(time.Second * 4)
+	var e1Term, e2Term, e3Term, e4Term int
 	e1, e1Term,e1Leader,_ = cfg.obtenerEstadoRemotoWithNodesOff(0)
 	e2, e2Term,e2Leader,_ = cfg.obtenerEstadoRemotoWithNodesOff(1)
 	e3, e3Term,e3Leader,_ = cfg.obtenerEstadoRemotoWithNodesOff(2)
+	e4, e4Term,e4Leader,_ = cfg.obtenerEstadoRemotoWithNodesOff(3)
+
 	fmt.Println(cfg.obtenerEstadoRemotoWithNodesOff(0))
 	fmt.Println(cfg.obtenerEstadoRemotoWithNodesOff(1))
 	fmt.Println(cfg.obtenerEstadoRemotoWithNodesOff(2))
+	fmt.Println(cfg.obtenerEstadoRemotoWithNodesOff(3))
 
 	count := 0
 	leaderID := -1
@@ -396,10 +427,16 @@ func(cfg *configDespliegue) SinAcuerdoPorFallos(t *testing.T) {
 		count++
 		leaderID = e3
 	}
+	if e4Term != -1 {
+		count++
+		leaderID = e4
+	}
+
 	fmt.Println(count)
 	if count > 1 {
 		 t.Errorf("Hay mas de un nodo arrancado")
 	}
+
 	// Comprobar varios acuerdos con 2 réplicas desconectada
 	// Comprometer una entrada
 	cfg.enviarOperacionCLiente()
@@ -410,28 +447,30 @@ func(cfg *configDespliegue) SinAcuerdoPorFallos(t *testing.T) {
 	// Comprometer una entrada
 	cfg.enviarOperacionCLiente()
 	fmt.Println(cfg.obtenerEntriesNodo(leaderID))
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second * 4)
 	fmt.Println(cfg.obtenerEntriesNodo(leaderID))
 	// reconectar lo2 nodos Raft  desconectados y probar varios acuerdos
 	cfg.startDistributedProcesses()
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 12)
 
 	fmt.Println(cfg.obtenerEntriesNodo(0))
 	fmt.Println(cfg.obtenerEntriesNodo(1))
 	fmt.Println(cfg.obtenerEntriesNodo(2))
+	fmt.Println(cfg.obtenerEntriesNodo(3))
 
 	entrysNodo1, commitI1 := cfg.obtenerEntriesNodo(0)
 	entrysNodo2, commitI2 := cfg.obtenerEntriesNodo(1)
 	entrysNodo3, commitI3 := cfg.obtenerEntriesNodo(2)
+	entrysNodo4, commitI4 := cfg.obtenerEntriesNodo(3)
 
-	if commitI1 != commitI2 || commitI1 != commitI3 || commitI2 != commitI3 {
+	if commitI1 != commitI2 || commitI1 != commitI3 || commitI1 != commitI4 || commitI2 != commitI3 || commitI2 != commitI4 || commit3 != commitI4 {
 		t.Errorf("Indice de comiteadas diferente")
 	}
-	if len(entrysNodo1) != len(entrysNodo2) || len(entrysNodo1) != len(entrysNodo3) || len(entrysNodo2) != len(entrysNodo3){
+	if len(entrysNodo1) != len(entrysNodo2) || len(entrysNodo1) != len(entrysNodo3) || len(entrysNodo1) != len(entrysNodo4) || len(entrysNodo2) != len(entrysNodo3) || len(entrysNodo2) != len(entrysNodo4) || len(entrysNodo3) != len(entrysNodo4){
 		t.Errorf("Replycacion de nodos diferente")
 	}else {
 		for i,element := range entrysNodo1 {
-			if element != entrysNodo2[i] || element != entrysNodo3[i] || entrysNodo2[i] != entrysNodo3[i]  {
+			if element != entrysNodo2[i] || element != entrysNodo3[i] || element != entrysNodo4[i] || entrysNodo2[i] != entrysNodo3[i] || entrysNodo2[i] != entrysNodo4[i] || entrysNodo3[i] != entrysNodo4[i] {
 				t.Errorf("Error Logs diferentes ")
 			}
 		}
@@ -439,7 +478,7 @@ func(cfg *configDespliegue) SinAcuerdoPorFallos(t *testing.T) {
 	cfg.stopDistributedProcesses()
 }
 
-// Se somete 5 operaciones de forma concurrente -- 3 NODOS RAFT
+// Se somete 5 operaciones de forma concurrente -- 4 NODOS RAFT
 func(cfg *configDespliegue) SometerConcurrentementeOperaciones(t *testing.T) {
 //	t.Skip("SKIPPED SometerConcurrentementeOperaciones")
 
@@ -448,45 +487,52 @@ func(cfg *configDespliegue) SometerConcurrentementeOperaciones(t *testing.T) {
 	cfg.startDistributedProcesses()
 
 	fmt.Printf("Esperamos Lider inicial\n")
-	time.Sleep(time.Second * 8)
+	time.Sleep(time.Second * 10)
 	cfg.pruebaUnLider(3)
 	e1,_,e1Leader,_ := cfg.obtenerEstadoRemoto(0)
 	e2,_,e2Leader,_ := cfg.obtenerEstadoRemoto(1)
 	e3,_,e3Leader,_ := cfg.obtenerEstadoRemoto(2)
+	e4,_,e4Leader,_ := cfg.obtenerEstadoRemoto(3)
 
-	if !e1Leader && !e2Leader && !e3Leader {
+	if !e1Leader && !e2Leader && !e3Leader && !e4Leader {
 		t.Errorf("NO hay lider")
 	}else {
 		fmt.Println("Estado actual")
 		fmt.Println("nodo ", e1, " isLeader: ", e1Leader)
 		fmt.Println("nodo ", e2, " isLeader: ", e2Leader)
 		fmt.Println("nodo ", e3, " isLeader: ", e3Leader)
+		fmt.Println("nodo ", e4, " isLeader: ", e4Leader)
 	}
 	// Obtener un lider y, a continuación someter una operacion
 	fmt.Println("EStado previo del log")
 	fmt.Println(cfg.obtenerEntriesNodo(0))
 	fmt.Println(cfg.obtenerEntriesNodo(1))
 	fmt.Println(cfg.obtenerEntriesNodo(2))
+	fmt.Println(cfg.obtenerEntriesNodo(3))
+
 	cfg.SometerConcurrentementeOperacionesCliente()
-	time.Sleep(time.Second * 4)
+	time.Sleep(time.Second * 6)
 	// Comprobar estados de nodos Raft, sobre todo
 	// el avance del mandato en curso e indice de registro de cada uno
 	// que debe ser identico entre ellos
 	fmt.Println(cfg.obtenerEntriesNodo(0))
 	fmt.Println(cfg.obtenerEntriesNodo(1))
 	fmt.Println(cfg.obtenerEntriesNodo(2))
+	fmt.Println(cfg.obtenerEntriesNodo(3))
+
 	entrysNodo1, commitI1 := cfg.obtenerEntriesNodo(0)
 	entrysNodo2, commitI2 := cfg.obtenerEntriesNodo(1)
 	entrysNodo3, commitI3 := cfg.obtenerEntriesNodo(2)
+	entrysNodo4, commitI4 := cfg.obtenerEntriesNodo(3)
 
-	if commitI1 != commitI2 || commitI1 != commitI3 || commitI2 != commitI3 {
+	if commitI1 != commitI2 || commitI1 != commitI3 || commitI1 != commitI4 || commitI2 != commitI3 || commitI2 != commitI4 || commitI3 != commitI4 {
 		t.Errorf("Indice de comiteadas diferente")
 	}
-	if len(entrysNodo1) != len(entrysNodo2) || len(entrysNodo1) != len(entrysNodo3) || len(entrysNodo2) != len(entrysNodo3){
+	if len(entrysNodo1) != len(entrysNodo2) || len(entrysNodo1) != len(entrysNodo3) || len(entrysNodo1) != len(entrysNodo4) || len(entrysNodo2) != len(entrysNodo3) || len(entrysNodo2) != len(entrysNodo4) || len(entrysNodo3) != len(entrysNodo4){
 		t.Errorf("Replycacion de nodos diferente")
 	}else {
 		for i,element := range entrysNodo1 {
-			if element != entrysNodo2[i] || element != entrysNodo3[i] || entrysNodo2[i] != entrysNodo3[i]  {
+			if element != entrysNodo2[i] || element != entrysNodo3[i] || element != entrysNodo4[i] || entrysNodo2[i] != entrysNodo3[i] || entrysNodo2[i] != entrysNodo4[i] || entrysNodo3[i] != entrysNodo4[i] {
 				t.Errorf("Error Logs diferentes ")
 			}
 		}
@@ -506,9 +552,8 @@ func (cfg *configDespliegue) pruebaUnLider(numreplicas int) int {
 		mapaLideres := make(map[int][]int)
 		for i := 0; i < numreplicas; i++ {
 			if cfg.conectados[i] {
-				if _, mandato, eslider, _ := cfg.obtenerEstadoRemoto(i);
-																	  eslider {
-																		  fmt.Println("nodo: ", i, " mandato: ", mandato, "es lider")
+				if _, mandato, eslider, _ := cfg.obtenerEstadoRemoto(i); eslider {
+					fmt.Println("nodo: ", i, " mandato: ", mandato, "es lider")
 					mapaLideres[mandato] = append(mapaLideres[mandato], i)
 				}
 			}
@@ -653,7 +698,7 @@ func (cfg *configDespliegue) stopDistributedLeaderProcesses() {
 					" " + strconv.Itoa(i) + " " +
 					rpctimeout.HostPortArrayToString(cfg.nodosRaft),
 					[]string{cfg.nodosRaft[i].Host()}, cfg.cr, PRIVKEYFILE)
-					time.Sleep(time.Millisecond * 250)
+					time.Sleep(time.Millisecond * 300)
 			}
 		}
 	}
@@ -677,7 +722,7 @@ func (cfg *configDespliegue) comprobarEstadoRemoto(idNodoDeseado int,
 }
 
 func (cfg *configDespliegue) enviarOperacionesCLiente() {
-	for i := 0 ; i < 3 ; i++ {
+	for i := 0 ; i < 4; i++ {
 		op := definitions.TipoOperacion{}
 		op.Operacion = "Prueba"
 		cliente := cltraft.NewClient("localhost","29250","op", cfg.nodosRaft)
@@ -686,10 +731,10 @@ func (cfg *configDespliegue) enviarOperacionesCLiente() {
 }
 
 func (cfg *configDespliegue) enviarOperacionCLiente() {
-		op := definitions.TipoOperacion{}
-		op.Operacion = "Prueba"
-		cliente := cltraft.NewClient("localhost","29250","op", cfg.nodosRaft)
-		cliente.SendOperationToLeader(op)
+	op := definitions.TipoOperacion{}
+	op.Operacion = "Prueba"
+	cliente := cltraft.NewClient("localhost","29250","op", cfg.nodosRaft)
+	cliente.SendOperationToLeader(op)
 }
 
 func (cfg *configDespliegue) stopNumberOfDistributedProcessesNoleader() {
